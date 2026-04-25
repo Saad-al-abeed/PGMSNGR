@@ -1,7 +1,7 @@
 -- this is the /authenticate endpoint
 -- this script creates a stored function that authenticates a user trying to login
 -- successful credentials will return a JWT token that will last 7 days
--- Secret string : thisstringissoverysecret (Very important)
+-- Secret string : thisstringissoverysecretextrachars (Very important)
 
 create or replace function api.authenticate(
 	_email text, _password text
@@ -23,7 +23,7 @@ begin
 	jwt.token := sign(json_build_object(
 		'role', account_data.role,
 		'profile_id', account_data.id,
-		'exp', extract(epoch from now() + interval '7 days')), 'thisstringissoverysecret');
+		'exp', extract(epoch from now() + interval '7 days')), 'thisstringissoverysecretextrachars');
 
 	return jwt;
 end;
