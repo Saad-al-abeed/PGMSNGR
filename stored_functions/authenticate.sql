@@ -23,6 +23,7 @@ begin
 	jwt.token := sign(json_build_object(
 		'role', account_data.role,
 		'profile_id', account_data.id,
+		'token_version', account_data.token_version,
 		'exp', extract(epoch from now() + interval '7 days')), 'thisstringissoverysecretextrachars');
 
 	return jwt;

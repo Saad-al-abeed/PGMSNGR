@@ -15,6 +15,9 @@ create table private.account(
 	role name default 'authenticated_user'
 );
 
+alter table private.account
+add column token_version int default 1;
+
 create table api.profile(
 	id uuid primary key references private.account(id) on delete cascade,
 	display_name text,
