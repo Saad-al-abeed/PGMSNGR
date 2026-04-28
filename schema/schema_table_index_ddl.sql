@@ -47,6 +47,9 @@ create table api.message(
 	sent_at timestamptz default now()
 );
 
+alter table api.message alter column
+sender_id set default api.auth_profile_id();
+
 -- index creation
 create index participant_profile_idx on api.participant(profile_id);
 

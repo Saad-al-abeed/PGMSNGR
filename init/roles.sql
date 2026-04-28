@@ -16,6 +16,13 @@ grant delete on private.account to authenticated_user;
 grant execute on function api.change_password to authenticated_user;
 grant select on api.profile to authenticated_user;
 grant update (display_name, avatar_url, last_active) on api.profile to authenticated_user;
+grant select on api.participant to authenticated_user;
+grant select on api.conversation to authenticated_user;
+grant select on api.message to authenticated_user;
+grant insert (conversation_id, content) on api.message to authenticated_user;
+grant update (content) on api.message to authenticated_user;
+grant delete on api.message to authenticated_user;
+grant execute on function api.create_chat to authenticated_user;
 
 -- creating an authenticator which postgrest will use
 drop role if exists authenticator;
