@@ -34,6 +34,9 @@ create table api.conversation(
 alter table api.conversation 
 add column name text; -- this column is for naming the group conversations
 
+alter table api.conversation
+add column avatar_url text; -- this column is for giving an avatar for group chats
+
 create table api.participant(
 	conversation_id uuid references api.conversation(id) on delete cascade,
 	profile_id uuid references api.profile(id) on delete cascade,
@@ -41,6 +44,10 @@ create table api.participant(
 	role text check (role = 'member' or role = 'admin'),
 	primary key (conversation_id, profile_id)
 );
+
+alter table api.participant 
+add column status text not null default 'active' 
+check (status in ('active', 'hidden')); -- this column is for giving the 'delete' chat feature
 
 create table api.message(
 	id uuid primary key default gen_random_uuid(),

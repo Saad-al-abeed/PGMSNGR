@@ -4,6 +4,7 @@ drop policy if exists "Only admins can add new members" on api.participant;
 drop policy if exists "Only admins can remove any member" on api.participant;
 drop policy if exists "Only admins can turn a member into admin" on api.participant;
 drop policy if exists "Users can voluntarily leave a chat" on api.participant;
+drop policy if exists "Only admins can update group chat name and avatar" on api.conversation;
 
 -- Add members policy
 create policy "Only admins can add new members"
@@ -32,3 +33,10 @@ on api.participant
 for delete
 to authenticated_user
 using ( profile_id = api.auth_profile_id() );
+
+-- Group chat customization policy
+create policy "Only admins can update group chat name and avatar"
+on api.conversation
+for update
+to authenticated_user
+using ( type = 'group' and private.is_admin_of(id) );
