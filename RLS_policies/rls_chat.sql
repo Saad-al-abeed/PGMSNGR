@@ -6,10 +6,12 @@ alter table api.conversation enable row level security;
 alter table api.participant enable row level security;
 alter table api.message enable row level security;
 
--- drop policy "Users can only see their own participations" on api.participant;
--- drop policy "Users can only see their own messages" on api.message;
--- drop policy "Users can only see their own conversations" on api.conversation;
--- drop policy "Users can only insert message on their own conversations" on api.message;
+drop policy if exists "Users can only see their own participations" on api.participant;
+drop policy if exists "Users can only see their own messages" on api.message;
+drop policy if exists "Users can only see their own conversations" on api.conversation;
+drop policy if exists "Users can only insert message on their own conversations" on api.message;
+drop policy if exists "Users can only delete message on their own conversations" on api.message;
+drop policy if exists "Users can only update message on their own conversations" on api.message;
 
 -- create the select policies
 create policy "Users can only see their own participations"

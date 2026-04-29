@@ -31,6 +31,9 @@ create table api.conversation(
 	created_at timestamptz default now()
 );
 
+alter table api.conversation 
+add column name text; -- this column is for naming the group conversations
+
 create table api.participant(
 	conversation_id uuid references api.conversation(id) on delete cascade,
 	profile_id uuid references api.profile(id) on delete cascade,

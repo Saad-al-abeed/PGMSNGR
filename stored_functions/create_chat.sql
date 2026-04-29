@@ -1,5 +1,5 @@
 -- this is the /create_chat endpoint to create conversations for chatting
--- for now only direct chatting is done by this
+-- only direct chatting is initialized by this
 
 create or replace function api.create_chat(target_profile_id uuid) 
 returns uuid 
@@ -11,7 +11,7 @@ begin
     insert into api.conversation (type) values ('direct')
 	returning id into new_conv_id;
 
-    -- Insert a row into api.participant using new_conv_id and your auth helper function
+    -- Insert a row into api.participant using new_conv_id and auth helper function
     insert into api.participant (conversation_id, profile_id, role) values
 	(new_conv_id, api.auth_profile_id(), 'member');
 
