@@ -8,10 +8,18 @@ select $html$
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PG Messenger</title>
+    <title>PG Messenger | Gateway</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- ROCK SOLID REDIRECT: Intercept immediately before page load -->
+    <script>
+        if (localStorage.getItem('pg_jwt')) {
+            window.location.replace('/rpc/app');
+        }
+    </script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
         
         :root { 
             --bg: #0d1117; 
@@ -40,11 +48,19 @@ select $html$
             padding: 2.5rem; 
             border-radius: 12px; 
             width: 100%; 
-            max-width: 380px; 
-            box-shadow: 0 16px 32px rgba(0,0,0,0.5);
+            max-width: 360px; 
+            box-shadow: 0 24px 48px rgba(0,0,0,0.7);
             border: 1px solid var(--border);
         }
-        h2 { text-align: center; margin-top: 0; margin-bottom: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+        h2 { 
+            text-align: center; 
+            margin-top: 0; 
+            margin-bottom: 2rem; 
+            font-weight: 800; 
+            letter-spacing: -0.5px; 
+            font-size: 1.5rem;
+        }
+        h2 span { color: var(--primary); }
         
         input { 
             width: 100%; 
@@ -56,9 +72,13 @@ select $html$
             border-radius: 6px; 
             box-sizing: border-box; 
             font-size: 0.95rem;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        input:focus { outline: none; border-color: var(--primary); }
+        input:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
         
         button { 
             width: 100%; 
@@ -67,7 +87,7 @@ select $html$
             color: #ffffff; 
             border: none; 
             border-radius: 6px; 
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600; 
             cursor: pointer; 
             transition: background-color 0.2s, transform 0.1s; 
@@ -82,41 +102,41 @@ select $html$
             padding: 0.75rem; 
             cursor: pointer; 
             color: var(--text-muted); 
-            font-weight: 600;
+            font-weight: 500;
+            font-size: 0.9rem;
             transition: color 0.2s, border-bottom 0.2s;
             border-bottom: 2px solid transparent;
         }
-        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        .tab.active { color: var(--text); border-bottom: 2px solid var(--primary); }
         
         .form-section { display: none; animation: fadeIn 0.3s ease-in-out; }
         .form-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         #console { 
-            margin-top: 2rem; 
-            padding: 1.2rem; 
+            margin-top: 1.5rem; 
+            padding: 1rem; 
             background: #010409; 
             font-family: 'Courier New', Courier, monospace; 
             border-radius: 6px; 
-            min-height: 40px; 
-            word-wrap: break-word; 
-            font-size: 0.85rem;
+            min-height: 20px; 
+            font-size: 0.8rem;
             border: 1px solid var(--border);
             color: var(--text-muted);
+            text-align: center;
         }
-        .msg-success { color: var(--success); font-weight: bold; }
-        .msg-error { color: var(--error); font-weight: bold; }
-        .token-box { font-size: 0.75rem; margin-top: 10px; color: var(--text); opacity: 0.7; word-break: break-all; }
+        .msg-success { color: var(--success); font-weight: 600; }
+        .msg-error { color: var(--error); font-weight: 600; }
     </style>
 </head>
 <body hx-headers='{"Accept": "application/json"}'>
 
 <div class="container">
-    <h2>PG Messenger</h2>
+    <h2>PG <span>Messenger</span></h2>
     
     <div class="tabs">
-        <div class="tab active" id="tab-login" onclick="switchTab('login')">Login</div>
-        <div class="tab" id="tab-register" onclick="switchTab('register')">Register</div>
+        <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+        <div class="tab" id="tab-register" onclick="switchTab('register')">Create Account</div>
     </div>
 
     <form id="login-form" class="form-section active" 
@@ -124,7 +144,7 @@ select $html$
           hx-swap="none">
         <input type="email" name="_email" placeholder="Email Address" required>
         <input type="password" name="_password" placeholder="Password" required>
-        <button type="submit">Log In</button>
+        <button type="submit">Secure Login</button>
     </form>
 
     <form id="register-form" class="form-section" 
@@ -133,14 +153,13 @@ select $html$
         <input type="email" name="_email" placeholder="Email Address" required>
         <input type="password" name="_password" placeholder="Password" required>
         <input type="text" name="_display_name" placeholder="Display Name" required>
-        <button type="submit">Create Account</button>
+        <button type="submit">Initialize Account</button>
     </form>
 
-    <div id="console">System ready. Waiting for input...</div>
+    <div id="console">Awaiting authentication...</div>
 </div>
 
 <script>
-    // UI Tab Switching Logic
     function switchTab(tab) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
@@ -153,46 +172,39 @@ select $html$
             document.getElementById('register-form').classList.add('active');
         }
         
-        // Reset console on tab switch
         const consoleEl = document.getElementById('console');
-        consoleEl.innerHTML = 'System ready. Waiting for input...';
+        consoleEl.innerHTML = 'Awaiting authentication...';
         consoleEl.style.color = 'var(--text-muted)';
     }
 
-    // HTMX Response Interceptor
     document.body.addEventListener('htmx:afterRequest', function(evt) {
         const xhr = evt.detail.xhr;
         const consoleEl = document.getElementById('console');
         
         try {
-            // Parse the JSON response from PostgREST
             const response = JSON.parse(xhr.response);
             
-            // If HTTP Status is 200 OK (or 201 Created)
             if (xhr.status >= 200 && xhr.status < 300) {
-                
                 if (evt.detail.requestConfig.path === '/rpc/authenticate') {
-                    // Login Success
-                    consoleEl.innerHTML = `<span class="msg-success">✓ Authentication successful</span><div class="token-box">JWT: ${response.token}</div>`;
-                    // Save JWT to browser for future API calls
+                    // SILENT AUTHENTICATION & REDIRECT
+                    consoleEl.innerHTML = `<span class="msg-success">Handshake confirmed. Redirecting...</span>`;
                     localStorage.setItem('pg_jwt', response.token); 
                     
-                } else {
-                    // Registration Success
-                    consoleEl.innerHTML = `<span class="msg-success">✓ User created successfully</span>`;
-                    evt.detail.elt.reset(); // Clear the form inputs
+                    // Give the user a brief visual confirmation before zooming them into the app
+                    setTimeout(() => {
+                        window.location.replace('/rpc/app');
+                    }, 600);
                     
-                    // Auto-switch to login tab after 2 seconds
-                    setTimeout(() => switchTab('login'), 2000); 
+                } else {
+                    consoleEl.innerHTML = `<span class="msg-success">Profile provisioned successfully.</span>`;
+                    evt.detail.elt.reset(); 
+                    setTimeout(() => switchTab('login'), 1500); 
                 }
-                
             } else {
-                // If HTTP Status is 4xx or 5xx (Database Error)
-                consoleEl.innerHTML = `<span class="msg-error">✗ ${response.message || 'Action failed'}</span>`;
+                consoleEl.innerHTML = `<span class="msg-error">${response.message || 'Access Denied'}</span>`;
             }
         } catch(e) {
-            // Fallback for extreme network errors
-            consoleEl.innerHTML = `<span class="msg-error">✗ Unexpected network error</span>`;
+            consoleEl.innerHTML = `<span class="msg-error">Network anomaly detected</span>`;
         }
     });
 </script>
