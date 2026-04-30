@@ -7,10 +7,23 @@ language plpgsql security definer as $$
 declare
     existing_conv_id uuid;
     new_conv_id uuid;
+	block_exists boolean;
 begin
     -- Prevent users from trying to DM themselves
     if target_profile_id = api.auth_profile_id() then
         raise exception 'You cannot create a direct message with yourself.';
+    end if;
+
+	-- check for block
+	select exists (
+        select 1 from api.block
+        where (blocker_id = api.auth_profile_id() and blocked_id = target_profile_id)
+           or (blocker_id = target_profile_id and blocked_id = api.auth_profile_id())
+    ) into block_exists;
+
+    -- If a block exists, throw error
+    if block_exists then
+        raise exception 'Cannot create a direct message with this user.';
     end if;
 
     -- Does a DM already exist between these two users?

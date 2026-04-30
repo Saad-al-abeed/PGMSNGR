@@ -30,6 +30,7 @@ grant execute on function api.create_chat to authenticated_user;
 grant execute on function api.create_group_chat to authenticated_user;
 grant execute on function api.hide_chat to authenticated_user;
 grant execute on function api.unarchive_chat to authenticated_user;
+grant select, insert, delete on api.block to authenticated_user;
 
 -- creating an authenticator which postgrest will use
 drop role if exists authenticator;

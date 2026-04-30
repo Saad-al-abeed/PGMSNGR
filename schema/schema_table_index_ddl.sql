@@ -60,6 +60,16 @@ create table api.message(
 alter table api.message alter column
 sender_id set default api.auth_profile_id();
 
+create table api.block(
+	blocker_id uuid references api.profile(id) on delete cascade,
+	blocked_id uuid references api.profile(id) on delete cascade 
+	check (blocked_id != blocker_id),
+	primary key (blocker_id, blocked_id)
+);
+
+alter table api.block 
+alter column blocker_id set default api.auth_profile_id();
+
 -- index creation
 create index participant_profile_idx on api.participant(profile_id);
 
