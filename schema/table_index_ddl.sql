@@ -1,11 +1,4 @@
--- Here the schemas and the tables are going to be defined
-
--- schema creation
-drop schema if exists private cascade;
-create schema private;
-
-drop schema if exists api cascade;
-create schema api;
+-- Here the schemas tables are going to be defined
 
 -- table creation
 create table private.account(

@@ -282,7 +282,10 @@ select $html$
                 <button class="icon-btn" id="toggle-inbox-btn" title="Active Chats" style="display: none;" 
                         hx-get="/rpc/render_inbox" hx-target="#inbox-container" 
                         onclick="document.getElementById('inbox-title').innerText = 'Messages'; this.style.display='none'; document.getElementById('toggle-archive-btn').style.display='flex';">📥</button>
-                <button class="new-chat-btn" title="New Chat">+</button>
+                <button class="new-chat-btn" title="Start New Chat"
+                        hx-get="/rpc/render_user_directory"
+                        hx-target="#chat-container"
+                        hx-swap="innerHTML">+</button>
             </div>
         </div>
         
@@ -310,6 +313,95 @@ select $html$
     </div>
     <!-- Toast Container -->
     <div id="toast-container"></div>
+
+    <!-- Realtime WebSocket Integration (Upgraded) -->
+    <script type="module">
+        import { RealtimeClient } from 'https://cdn.jsdelivr.net/npm/@supabase/realtime-js@2.10.2/+esm';
+
+        const jwt = localStorage.getItem('pg_jwt');
+        if (!jwt) return;
+
+        const client = new RealtimeClient('ws://localhost:4000/socket', {
+            params: { apikey: jwt } 
+        });
+        client.connect();
+
+        const channel = client.channel('realtime:public:chat_events');
+
+        // 1. Listen to ALL events on the Message table (* means INSERT, UPDATE, and DELETE)
+        channel.on('postgres_changes', { event: '*', schema: 'api', table: 'message' }, payload => {
+            const activeConvInput = document.querySelector('input[name="conversation_id"]');
+            // Safe check: handle whether it's an INSERT/UPDATE (has payload.new) or DELETE (has payload.old)
+            const activeConvId = payload.new ? payload.new.conversation_id : payload.old.conversation_id;
+            const msgId = payload.new ? payload.new.id : payload.old.id;
+            const isActiveChat = activeConvInput && activeConvInput.value === activeConvId;
+
+            // Handle INSERT (New Messages)
+            if (payload.eventType === 'INSERT') {
+                if (isActiveChat) {
+                    if (!document.getElementById('msg-' + msgId)) {
+                        htmx.ajax('POST', '/rpc/render_message_bubble', {
+                            target: '#message-list',
+                            swap: 'beforeend',
+                            values: { _msg_id: msgId }
+                        }).then(() => {
+                            const msgList = document.getElementById('message-list');
+                            if(msgList) msgList.scrollTop = msgList.scrollHeight;
+                        });
+                    }
+                } else {
+                    showToast('New message received! 💬');
+                }
+            }
+
+            // Handle UPDATE (Edited Messages)
+            if (payload.eventType === 'UPDATE') {
+                if (isActiveChat && document.getElementById('msg-' + msgId)) {
+                    // Ask Postgres to render the updated HTML and swap it over the old bubble
+                    htmx.ajax('POST', '/rpc/render_message_bubble', {
+                        target: '#msg-' + msgId,
+                        swap: 'outerHTML',
+                        values: { _msg_id: msgId }
+                    });
+                }
+            }
+
+            // Handle DELETE (Deleted Messages)
+            if (payload.eventType === 'DELETE') {
+                if (isActiveChat) {
+                    const msgElement = document.getElementById('msg-' + msgId);
+                    if (msgElement) {
+                        // Smooth fade out before removing from DOM
+                        msgElement.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+                        msgElement.style.opacity = "0";
+                        msgElement.style.transform = "scale(0.95)";
+                        setTimeout(() => msgElement.remove(), 300);
+                    }
+                }
+            }
+
+            // INBOX SYNC: No matter what happened to the message, refresh the inbox 
+            // so the latest message snippet and timestamps stay accurate!
+            htmx.trigger('#inbox-container', 'load');
+        });
+
+        // 2. Listen to Conversation updates (e.g., someone changed the group name)
+        channel.on('postgres_changes', { event: 'UPDATE', schema: 'api', table: 'conversation' }, payload => {
+            // Silently fetch the updated inbox view
+            htmx.trigger('#inbox-container', 'load');
+            
+            // If they are currently looking at the renamed chat, optionally reload the chat header
+            const activeConvInput = document.querySelector('input[name="conversation_id"]');
+            if (activeConvInput && activeConvInput.value === payload.new.id) {
+                 htmx.ajax('POST', '/rpc/render_chat', {
+                     target: '#chat-container',
+                     values: { _c_id: payload.new.id }
+                 });
+            }
+        });
+
+        channel.subscribe();
+    </script>
 
 </body>
 </html>

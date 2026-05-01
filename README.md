@@ -24,11 +24,11 @@ and show my potential and consistency in being a Backend Developer and Database 
 
 ## Tech Stack
 
-- **Core Database**: PostgreSQL 16+
-- **API Engine**: PostgREST (Automatic RESTful API generation from SQL schema)
-- **Authentication**: JWT (JSON Web Tokens) with Token Versioning
-- **Real-time Hooks**: PostgreSQL LISTEN/NOTIFY & Triggers
-- **Frontend**: HTMX & Vanilla JavaScript (Leveraging the JSON-enc extension for RESTful compliance)
+- **Core Database**: PostgreSQL 16+ (with Logical Replication)
+- **API Engine**: PostgREST (Automatic RESTful API generation)
+- **Real-time Engine**: Supabase Realtime (WebSocket broadcasting via PostgreSQL WAL)
+- **Authentication**: JWT with Token Versioning Protocol
+- **Frontend**: HTMX, Vanilla JavaScript, and Tailwind CSS (Glassmorphism UI)
 - **Security**: Granular Row-Level Security (RLS) & Schema Isolation
 
 ---
@@ -168,7 +168,6 @@ The frontend is currently a **Work in Progress (WIP)**. It is designed as a High
 ### Remaining Work:
 - Finalizing the group chat participant management UI.
 - Integrating real-time state updates (see Future Upgrades).
-- Isolating the project by putting it in a docker container.
 
 ---
 
@@ -196,61 +195,30 @@ Here is the complete, polished **Deployment & Configuration** section, incorpora
 
 Follow these steps to set up PGMSNGR on your local machine.
 
+### Deployment & Configuration (Docker)
+
+The recommended way to run PGMSNGR is via Docker. This ensures that the Database, API Engine, and Realtime WebSocket server are all perfectly synchronized and configured.
+
 ### Prerequisites
-Before you begin, ensure you have the following installed:
-*   **PostgreSQL 16+**: The primary database engine.
-*   **PostgREST 12+**: The web server that transforms your database into a RESTful API.
-*   **`psql` command-line tool**: For executing SQL scripts.
+Before you begin, ensure you have **Docker** and **Docker Compose** installed on your machine.
 
-### 1. Database Initialization
-First, create a new PostgreSQL database and apply the source code using the provided setup script. Using the `-U postgres` flag ensures you have the necessary superuser permissions to set up roles and schemas.
+### 1. Spin up the Stack
+Run the following command in the root of the project to start the entire infrastructure:
 
 ```bash
-# Create the database
-createdb -U postgres PGMSNGR
-
-# Apply the complete setup script
-psql -U postgres -d PGMSNGR -f setup.sql
+docker-compose up -d
 ```
 
-### 2. Configure PostgREST
-Create or edit the `config/postgrest.conf` file to match your environment. Use the following configuration to connect PostgREST to your newly created database:
-
-```ini
-# The standard PostgreSQL connection URI
-db-uri = "postgres://authenticator:1234@localhost:5432/PGMSNGR"
-
-# The database schema to expose as a REST API
-db-schemas = "api"
-
-# The database role to use for unauthenticated requests
-db-anon-role = "web_anon"
-
-# The secret used to verify JWT tokens (must be at least 32 characters)
-jwt-secret = "thisstringissoverysecretextrachars"
-
-# The TCP port to bind the web server (defaults to 3000)
-server-port = 3000
-
-# Level of information to be logged (crit, error, warn, info)
-log-level = "info"
-
-# Allowed media types for raw output
-raw-media-types = "text/html, text/css, image/png"
-```
-> **Note:** Ensure your `setup.sql` script actually creates the `authenticator` and `web_anon` roles, grants the necessary permissions, and exposes your functions within the `api` schema.
-
-### 3. Running Locally
-Start the PostgREST server using your configuration file:
-
-```bash
-postgrest config/postgrest.conf
-```
-
-Once started, the API will be available at `http://localhost:3000`. 
-
-Since the frontend is served directly from the database via an RPC function, you can access the application by navigating to the following URL in your web browser:
+### 2. Access the Application
+Once the containers are healthy, open your web browser and navigate to:
 **`http://localhost:3000/rpc/index`**
 
-**Security Warning**: Never share the `jwt-secret` in a production environment.
+The `docker-compose.yml` file handles the following automatically:
+- Initializes the PostgreSQL database with all required schemas, tables, and roles.
+- Configures PostgREST to serve the API.
+- Sets up the Supabase Realtime server for live WebSocket events.
+- Enables Logical Replication for real-time data broadcasting.
 
+---
+
+**Security Warning**: Never share the `jwt-secret` in a production environment. For production deployments, use environment variables to manage sensitive credentials.
