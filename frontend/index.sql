@@ -19,117 +19,204 @@ select $html$
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         
         :root { 
-            --bg: #0d1117; 
-            --surface: #161b22; 
-            --primary: #58a6ff; 
-            --primary-hover: #3182ce;
-            --text: #c9d1d9; 
-            --text-muted: #8b949e;
-            --error: #f85149;
-            --success: #3fb950;
-            --border: #30363d;
+            --bg-base: #0B0F19; 
+            --surface: rgba(22, 27, 34, 0.6); 
+            --primary-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            --primary-hover: linear-gradient(135deg, #00e0eb 0%, #3f9be6 100%);
+            --text: #ffffff; 
+            --text-muted: #94a3b8;
+            --error: #ef4444;
+            --success: #10b981;
+            --border: rgba(255, 255, 255, 0.08);
         }
+        
         body { 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg); 
+            font-family: 'Outfit', sans-serif; 
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(79, 172, 254, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 242, 254, 0.15), transparent 25%);
+            background-attachment: fixed;
             color: var(--text); 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
             margin: 0; 
-            background-image: radial-gradient(circle at top, #1f242c, transparent 60%);
+            overflow: hidden;
         }
+
+        .backdrop-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: var(--primary-gradient);
+            filter: blur(120px);
+            opacity: 0.15;
+            z-index: 0;
+            border-radius: 50%;
+            animation: pulse 8s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.15; }
+            100% { transform: scale(1.1) translate(20px, -20px); opacity: 0.25; }
+        }
+
         .container { 
             background: var(--surface); 
-            padding: 2.5rem; 
-            border-radius: 12px; 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 3rem; 
+            border-radius: 20px; 
             width: 100%; 
-            max-width: 360px; 
-            box-shadow: 0 24px 48px rgba(0,0,0,0.7);
+            max-width: 380px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
             border: 1px solid var(--border);
+            z-index: 1;
+            position: relative;
         }
+        
         h2 { 
             text-align: center; 
             margin-top: 0; 
-            margin-bottom: 2rem; 
+            margin-bottom: 2.5rem; 
             font-weight: 800; 
             letter-spacing: -0.5px; 
-            font-size: 1.5rem;
+            font-size: 1.8rem;
         }
-        h2 span { color: var(--primary); }
+        h2 span { 
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
         
+        .input-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
         input { 
             width: 100%; 
-            padding: 0.85rem 1rem; 
-            margin-bottom: 1.2rem; 
-            background: #010409; 
+            padding: 1rem 1.2rem; 
+            background: rgba(0, 0, 0, 0.3); 
             border: 1px solid var(--border); 
             color: white; 
-            border-radius: 6px; 
+            border-radius: 12px; 
             box-sizing: border-box; 
-            font-size: 0.95rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            font-size: 1rem;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        input::placeholder { color: transparent; }
+        
         input:focus { 
             outline: none; 
-            border-color: var(--primary); 
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+            border-color: rgba(79, 172, 254, 0.5); 
+            box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .floating-label {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        input:focus ~ .floating-label,
+        input:not(:placeholder-shown) ~ .floating-label {
+            top: 0;
+            transform: translateY(-50%) scale(0.85);
+            background: var(--bg-base);
+            padding: 0 0.4rem;
+            color: #4facfe;
+            border-radius: 4px;
         }
         
         button { 
             width: 100%; 
-            padding: 0.85rem; 
-            background: var(--primary); 
+            padding: 1rem; 
+            background: var(--primary-gradient); 
             color: #ffffff; 
             border: none; 
-            border-radius: 6px; 
-            font-size: 0.95rem;
-            font-weight: 600; 
+            border-radius: 12px; 
+            font-size: 1.05rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700; 
             cursor: pointer; 
-            transition: background-color 0.2s, transform 0.1s; 
+            transition: all 0.2s ease; 
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            margin-top: 0.5rem;
         }
-        button:hover { background: var(--primary-hover); }
-        button:active { transform: scale(0.98); }
+        button:hover { 
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+        button:active { transform: translateY(1px); }
         
-        .tabs { display: flex; margin-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .tabs { 
+            display: flex; 
+            margin-bottom: 2.5rem; 
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 0.3rem;
+        }
         .tab { 
             flex: 1; 
             text-align: center; 
             padding: 0.75rem; 
             cursor: pointer; 
             color: var(--text-muted); 
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: color 0.2s, border-bottom 0.2s;
-            border-bottom: 2px solid transparent;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border-radius: 8px;
         }
-        .tab.active { color: var(--text); border-bottom: 2px solid var(--primary); }
+        .tab.active { 
+            color: var(--text); 
+            background: rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
         
-        .form-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .form-section { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .form-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
         
         #console { 
-            margin-top: 1.5rem; 
+            margin-top: 2rem; 
             padding: 1rem; 
-            background: #010409; 
-            font-family: 'Courier New', Courier, monospace; 
-            border-radius: 6px; 
-            min-height: 20px; 
-            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.3); 
+            font-family: 'Consolas', monospace; 
+            border-radius: 10px; 
+            min-height: 24px; 
+            font-size: 0.85rem;
             border: 1px solid var(--border);
             color: var(--text-muted);
             text-align: center;
+            backdrop-filter: blur(5px);
         }
-        .msg-success { color: var(--success); font-weight: 600; }
-        .msg-error { color: var(--error); font-weight: 600; }
+        .msg-success { color: var(--success); font-weight: 600; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+        .msg-error { color: var(--error); font-weight: 600; text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
     </style>
 </head>
 <body hx-headers='{"Accept": "application/json"}'>
+
+<div class="backdrop-glow"></div>
 
 <div class="container">
     <h2>PG <span>Messenger</span></h2>
@@ -142,17 +229,32 @@ select $html$
     <form id="login-form" class="form-section active" 
           hx-post="/rpc/authenticate" 
           hx-swap="none">
-        <input type="email" name="_email" placeholder="Email Address" required>
-        <input type="password" name="_password" placeholder="Password" required>
+        <div class="input-group">
+            <input type="email" name="_email" id="login-email" placeholder=" " required>
+            <label class="floating-label" for="login-email">Email Address</label>
+        </div>
+        <div class="input-group">
+            <input type="password" name="_password" id="login-password" placeholder=" " required>
+            <label class="floating-label" for="login-password">Password</label>
+        </div>
         <button type="submit">Secure Login</button>
     </form>
 
     <form id="register-form" class="form-section" 
           hx-post="/rpc/register_account" 
           hx-swap="none">
-        <input type="email" name="_email" placeholder="Email Address" required>
-        <input type="password" name="_password" placeholder="Password" required>
-        <input type="text" name="_display_name" placeholder="Display Name" required>
+        <div class="input-group">
+            <input type="email" name="_email" id="reg-email" placeholder=" " required>
+            <label class="floating-label" for="reg-email">Email Address</label>
+        </div>
+        <div class="input-group">
+            <input type="password" name="_password" id="reg-password" placeholder=" " required>
+            <label class="floating-label" for="reg-password">Password</label>
+        </div>
+        <div class="input-group">
+            <input type="text" name="_display_name" id="reg-name" placeholder=" " required>
+            <label class="floating-label" for="reg-name">Display Name</label>
+        </div>
         <button type="submit">Initialize Account</button>
     </form>
 
@@ -186,14 +288,14 @@ select $html$
             
             if (xhr.status >= 200 && xhr.status < 300) {
                 if (evt.detail.requestConfig.path === '/rpc/authenticate') {
-                    // SILENT AUTHENTICATION & REDIRECT
                     consoleEl.innerHTML = `<span class="msg-success">Handshake confirmed. Redirecting...</span>`;
                     localStorage.setItem('pg_jwt', response.token); 
                     
-                    // Give the user a brief visual confirmation before zooming them into the app
                     setTimeout(() => {
-                        window.location.replace('/rpc/app');
-                    }, 600);
+                        document.body.style.opacity = '0';
+                        document.body.style.transition = 'opacity 0.5s ease';
+                        setTimeout(() => window.location.replace('/rpc/app'), 500);
+                    }, 400);
                     
                 } else {
                     consoleEl.innerHTML = `<span class="msg-success">Profile provisioned successfully.</span>`;
