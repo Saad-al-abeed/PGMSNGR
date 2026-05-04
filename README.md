@@ -155,6 +155,66 @@ All endpoints expect the `Authorization: Bearer <token>` header unless otherwise
 **Response**: 204 No Content.
 
 ---
+Here is an updated, enterprise-grade revision of your README section. 
+
+From a senior engineering perspective, your read-throughput is exceptional, but the tests expose the classic vulnerability of the "Database-as-the-Backend" pattern: CPU-bound write operations (like password hashing and complex triggers) cause long-tail latency spikes. 
+
+Here is how you can present this objectively, highlighting both the massive strengths and the identified scaling ceilings.
+
+***
+
+## Load Testing & Performance Architecture
+
+To validate the "Database-as-the-Backend" philosophy, PGMSNGR is rigorously load-tested using **k6**. The tests evaluate raw throughput, concurrency scaling, and complex real-world workflows involving triggers, cryptographic functions, and Row-Level Security (RLS). 
+
+The following results demonstrate the system's baseline performance and identify architectural ceilings for future horizontal scaling.
+
+### 1. Single Endpoint RPS (Read Stress Test)
+**Test Protocol**: Simulates 110 Virtual Users (VUs) constantly bombarding the `GET /inbox` endpoint without sleep delays for 30 seconds to measure absolute maximum Requests Per Second (RPS) and connection pool saturation.
+
+**Results**:
+* **Total Requests**: 152,089
+* **Throughput**: ~5,050 RPS
+* **p(95) Latency**: 29.01ms
+* **Error Rate**: 0.00%
+
+**Enterprise Assessment**: 
+* **The Good**: Bypassing a traditional Node.js/Python middle tier shows immense strength here. PostgREST's Haskell-based connection pooler handles over 5,000 RPS effortlessly. Eliminating the typical ORM serialization overhead results in a p95 latency under 30ms, which is exceptional for authenticated, RLS-filtered database queries.
+* **The Bottleneck**: The maximum request duration spiked to ~340ms. While the 95th percentile remained fast, this indicates that sustained, unthrottled read spam will eventually cause minor query queuing at the database engine level.
+
+!RPS Stress Test Result
+
+### 2. Concurrent Load Test (Batch Read Operations)
+**Test Protocol**: Evaluates Connection Pool stability under gradual traffic swells. Ramps up to 110 VUs over 2 minutes, simulating human-paced interactions (1s sleep). VUs execute concurrent batch requests to both `GET /inbox` and `GET /archive`.
+
+**Results**:
+* **Total Requests**: 14,698
+* **Throughput**: ~121 RPS
+* **p(95) Latency**: 6.19ms
+* **Error Rate**: 0.00%
+
+**Enterprise Assessment**: 
+* **The Good**: PostgreSQL’s Multi-Version Concurrency Control (MVCC) shines under human-paced loads. The system resolved 95% of batched, authenticated queries in under 6.5ms. The connection pool dynamically handled the ramp-up and ramp-down without dropping a single packet or throwing a 503 error. 
+* **The Bottleneck**: At 110 VUs, the database is essentially idling. To find the true enterprise ceiling for concurrent read-locks, future tests should push this metric to 1,000+ simultaneous VUs to evaluate PostgREST's socket backpressure capabilities.
+
+!Concurrent Load Test Result
+
+### 3. Real-Life Simulation (Write-Heavy Workflow)
+**Test Protocol**: The ultimate stress test for the Postgres logic layer. Simulates 20 distinct VUs simultaneously executing a full application lifecycle: Registration (cryptographic password hashing), Authentication (JWT minting), Inbox viewing, Chat creation (trigger execution), and Message sending.
+
+**Results**:
+* **Total Requests**: 2,000
+* **Throughput**: ~32.6 RPS
+* **p(95) Latency**: 16.10ms
+* **Max Latency**: 407.38ms
+* **Error Rate**: 0.00%
+
+**Enterprise Assessment**: 
+* **The Good**: The architecture successfully executed highly complex, multi-stage transactions entirely within PostgreSQL. Despite heavy `INSERT` operations, RLS evaluations, and trigger cascades, the workflow completed with a 0% failure rate and a stellar 16ms p95 latency. 
+* **The Bottleneck**: The max latency of 407.38ms is the critical takeaway. In a DB-as-a-backend model, CPU-bound tasks like `pgcrypto` password hashing and trigger-based row insertions lock resources differently than simple reads. While 20 users writing concurrently is handled well, the 400ms tail-latency suggests that scaling to thousands of concurrent *writes* might result in thread starvation. At enterprise scale, CPU-intensive tasks (like hashing) might eventually need to be offloaded from the database layer to maintain linear write scalability.
+
+!Real-Life Simulation Result
+---
 
 ## Frontend Implementation Overview
 
